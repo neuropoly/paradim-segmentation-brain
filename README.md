@@ -1,5 +1,5 @@
 # paradim-segmentation-brain
-Repository for implementing pre-existing brain segmentation models trained with deep learning in [PARADIM](https://paradim.science/)
+Repository for implementing pre-existing brain segmentation models trained with deep learning in *Plateforme d'annotation, de réutilisation et d'analyse d'images médicales [PARADIM](https://paradim.science/)*
 
 
 # References
