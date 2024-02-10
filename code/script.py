@@ -6,105 +6,124 @@ import SimpleITK as sitk
 import dicom2nifti
 import glob
 import subprocess
+import pydicom_seg
+import pandas as pd
+import nibabel as nib
+import warnings
+
+# Deactive Pydicom warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="pydicom.valuerep")
 
 def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def read_dicom_metadata(ruta):
-    ds = pydicom.dcmread(ruta, force=True)
-    return ds
-
 def convert_dicom_to_nifti(dicom_dir, output_nifti_path):
     dicom2nifti.convert_directory(dicom_dir, output_nifti_path, compression=True, reorient=False)
 
-def write_slices(series_tag_values, new_img, i, out_dir,dicom_dir):
-    image_slice = new_img[:, :, i]
-    image_slice = sitk.Cast(image_slice, sitk.sitkInt16)
-    writer = sitk.ImageFileWriter()
-    writer.KeepOriginalImageUIDOn()
-    
-    list(map(lambda tag_value: image_slice.SetMetaData(tag_value[0], tag_value[1]), series_tag_values))
-    
-    dicom_folder = os.listdir(dicom_dir)
-    dcm_files = [dcm_files for dcm_files in dicom_folder if dcm_files.lower().endswith(".dcm")]
-    for dcm_files in dicom_folder:
-        dcm_files
-    dicom_folder[0]
-    root_one_dcm = dicom_dir + dicom_folder[0]   
-    
-    dicom_metadata = read_dicom_metadata(root_one_dcm)
-    #value_0008_0012 = dicom_metadata.get((0x0008, 0x0012), "Unknown").value
-    value_0008_0020 = dicom_metadata.get((0x0008, 0x0020), "Unknown").value
-    value_0008_0060 = dicom_metadata.get((0x0008, 0x0060), "Unknown").value
-    #value_0020_0032 = dicom_metadata.get((0x0020, 0x0032), "Unknown").value
-    value_0020_0013 = dicom_metadata.get((0x0020, 0x0013) ).value
-
-    #image_slice.SetMetaData("0008|0012", value_0008_0012)  
-    image_slice.SetMetaData("0008|0020", value_0008_0020)  
-    image_slice.SetMetaData("0008|0060", value_0008_0060) 
-    image_slice.SetMetaData("0020|0032", '\\'.join(map(str, new_img.TransformIndexToPhysicalPoint((0, 0, i)))))  # Image Position (Patient)
-    image_slice.SetMetaData("0020,0013", str(value_0020_0013))  # Instance Number
-    
-    writer.SetFileName(os.path.join(out_dir, f'slice{i:04d}.dcm'))
-    writer.Execute(image_slice) 
-
-def convert_nifti_to_dicom(in_dir, out_dir, dicom_dir):
-    new_img = sitk.ReadImage(in_dir)
-
-    dicom_folder = os.listdir(dicom_dir)
-    dcm_files = [dcm_files for dcm_files in dicom_folder if dcm_files.lower().endswith(".dcm")]
-    for dcm_files in dicom_folder:
-        dcm_files
-    dicom_folder[0]
-    root_one_dcm = dicom_dir + dicom_folder[0]   
-
-    dicom_metadata = read_dicom_metadata(root_one_dcm)
-    value_0008_0031 = dicom_metadata.get((0x0008, 0x0031), "Unknown").value
-    value_0008_0021 = dicom_metadata.get((0x0008, 0x0021), "Unknown").value
-    value_0008_0008 = dicom_metadata.get((0x0008, 0x0008), "Unknown").value
-    value_0020_000e = dicom_metadata.get((0x0020, 0x000e), "Unknown").value
-    value_0020_103e = dicom_metadata.get((0x0008, 0x103e), "Unknown").value
-    
-    direction = new_img.GetDirection()   
-
-    series_tag_values = [("0008|0031", value_0008_0031),  # Series Time
-                         ("0008|0021", value_0008_0021),  # Series Date
-                         ("0008|0008", '\\'.join(value_0008_0008)),  # Image Type
-                         ("0020|000e", value_0020_000e),  # Series Instance UID
-                         ("0020|0037", '\\'.join(map(str, (direction[0], direction[3], direction[6],
-                                                           direction[1], direction[4], direction[7])))),
-
-                         ("0008|103e", value_0020_103e)]  # Series Description
-    
-    for i in range(new_img.GetDepth()):
-        write_slices(series_tag_values, new_img, i, out_dir,dicom_dir)
-
 def main():
-    parser = argparse.ArgumentParser(description='Converts DICOM to NIfTI and vice versa.')
-    parser.add_argument('--dicom_dir', required=True, help='Path to directory with DICOM files')
-    parser.add_argument('--dicom_out_dir', required=True, help='Path to output directory for DICOM files')
-    
+    parser = argparse.ArgumentParser(description='Function that takes as input a Dicom folder of MRI data, segments it with the WMHSynthSeg model and outputs the segmentation in a Dicom folder.')
+    parser.add_argument('--dicom_input_dir', required=True, help='Path to input directory with DICOM files (anat)')
+    parser.add_argument('--dicom_out_dir', required=True, help='Path to output directory for DICOM files (segmentation)')
     args = parser.parse_args()
-    # Create folder        
-    temp_nifti_dir = "nifti_files/"
+
+    # Create folder
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    dicom_input_dir = args.dicom_input_dir
+    temp_folder_name = os.path.basename(dicom_input_dir) + "_temp"
+    temp_nifti_dir = os.path.join(script_directory, temp_folder_name)
     create_directory(temp_nifti_dir)
     create_directory(args.dicom_out_dir)
-    
+
     # Convertir DICOM a NIfTI
-    convert_dicom_to_nifti(args.dicom_dir, temp_nifti_dir)
-    
-    temp_nifti_file = "nifti_files/*.nii.gz"
-    nifti_files = glob.glob(os.path.join(temp_nifti_file))   
-    #command_1 = f"bet2  {nifti_files[0]}  {temp_nifti_dir} -m"
-    temp_nifti_mask_1 = "nifti_files/_mask.nii.gz"
-    command_1 = f"mri_convert -vs 2 2 2 {nifti_files[0]}  {temp_nifti_mask_1}"
-    #command_1 = f"python3 docker_file/WMHSynthSeg/inference.py --i {nifti_files[0]} --o {temp_nifti_mask_1}"
-    subprocess.run(command_1, shell=True)
-    # Convertir NIfTI a DICOM
-    temp_nifti_mask = "nifti_files/*_mask.nii.gz"
-    nifti_files_mask = glob.glob(os.path.join(temp_nifti_mask)) 
-    convert_nifti_to_dicom(nifti_files_mask[0], args.dicom_out_dir, args.dicom_dir)
+    convert_dicom_to_nifti(args.dicom_input_dir, temp_nifti_dir)
+
+    # Create Tmp folder and files
+    nifti_files = glob.glob(os.path.join(temp_nifti_dir, '*.nii.gz'))
+    temp_nifti_mask_1 = os.path.join(temp_nifti_dir, 'WMHSynthSeg_seg.nii.gz')
+    temp_nifti_mask_res = os.path.join(temp_nifti_dir, 'res.nii.gz')
+
+    #Processing : (bet2 for brain mask segmentation )
+    command_2 = f"python3 WMHSynthSeg/inference.py --i {nifti_files[0]} --o {temp_nifti_mask_1}"
+    subprocess.run(command_2, shell=True)
+
+    # Reslincing
+    command_3 = f"mri_vol2vol --mov {temp_nifti_mask_1} --targ {nifti_files[0]} --o {temp_nifti_mask_res} --regheader --nearest "
+    subprocess.run(command_3, shell=True)
+
+    # Labels names
+    data = {'Intensity': [2, 3, 4, 5, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 24, 26, 28, 41, 42, 43, 44, 46, 47, 49, 50, 51, 52, 53, 54, 58, 60, 77],
+        'Label': [  "Left-Cerebral-White-Matter",
+                    "Left-Cerebral-Cortex",
+                    "Left-Lateral-Ventricle",
+                    "Left-Inf-Lat-Vent",
+                    "Left-Cerebellum-White-Matter",
+                    "Left-Cerebellum-Cortex",
+                    "Left-Thalamus",
+                    "Left-Caudate",
+                    "Left-Putamen",
+                    "Left-Pallidum",
+                    "3rd-Ventricle",
+                    "4th-Ventricle",
+                    "Brain-Stem",
+                    "Left-Hippocampus",
+                    "Left-Amygdala",
+                    "CSF",
+                    "Left-Accumbens-area",
+                    "Left-VentralDC",
+                    "Right-Cerebral-White-Matter",
+                    "Right-Cerebral-Cortex",
+                    "Right-Lateral-Ventricle",
+                    "Right-Inf-Lat-Vent",
+                    "Right-Cerebellum-White-Matter",
+                    "Right-Cerebellum-Cortex",
+                    "Right-Thalamus",
+                    "Right-Caudate",
+                    "Right-Putamen",
+                    "Right-Pallidum",
+                    "Right-Hippocampus",
+                    "Right-Amygdala",
+                    "Right-Accumbens-area",
+                    "Right-VentralDC",
+                    "WM-hypointensities"]}
+    df = pd.DataFrame(data)
+
+    # For dicom metadata
+    reader = sitk.ImageSeriesReader()
+    dcm_files = reader.GetGDCMSeriesFileNames(f"{args.dicom_input_dir}")
+    reader.SetFileNames(dcm_files)
+    image = reader.Execute()
+
+    # Open nifti files and re-orient
+    image_data_nii = nib.load ( f"{temp_nifti_mask_res}" )
+    segmentation_data_array = np.array(image_data_nii.get_fdata())
+    segmentation_data_array = np.rot90(segmentation_data_array)
+    segmentation_data_array = np.flipud(segmentation_data_array)
+    segmentation_data_array = np.transpose(segmentation_data_array, (2, 0, 1))
+    all_intensities = {}
+    for index, row in df.iterrows():
+        intensity = row.iloc[0]
+        label_name = row.iloc[1]
+        segment = segmentation_data_array == intensity
+        all_intensities[intensity] = nib.Nifti1Image(segment.astype(np.uint8), image_data_nii.affine)
+        segmentation_data = np.array(all_intensities[intensity].get_fdata())
+        template_path = os.path.join(script_directory, 'template', f'{intensity}.json')
+        template = pydicom_seg.template.from_dcmqi_metainfo(template_path)
+        writer = pydicom_seg.MultiClassWriter( template = template, inplane_cropping=False,  skip_empty_slices=False,  skip_missing_segment=False, )
+        if np.max(segmentation_data) != 0:
+            segmentation_data_uint = np.asarray(segmentation_data, dtype=np.uint8)
+            segmentation = sitk.GetImageFromArray(segmentation_data_uint)
+            segmentation.CopyInformation(image)
+            source_images = [ pydicom.dcmread(x, stop_before_pixels=True)
+                            for x in dcm_files]
+            dcm = writer.write(segmentation, source_images)
+            output_file_path = os.path.join(args.dicom_out_dir, f"{intensity}_{label_name}_WMH_SynthSeg.dcm")
+            dcm.save_as(output_file_path)
+        else:
+            print(f"Label -  {intensity} -  {label_name} Does Not Exist")
+    # For delete temporal (nii) files
+    #command_4 = f"rm -r {temp_nifti_dir}"
+    #subprocess.run(command_4, shell=True)
 
 if __name__ == "__main__":
     main()
