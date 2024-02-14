@@ -31,7 +31,7 @@ def run_wmh_synthseg():
     args = parser.parse_args()
 
     # Load wmh label dictionary
-    label_wmh_path = 'src/psb/labels/WMH-SynthSeg/label-dict.json'
+    label_wmh_path = 'src/psb/labels/WMH-SynthSeg/label-maps.json'
     template_dir = 'src/psb/labels/WMH-SynthSeg/template'
     with open(label_wmh_path, "r") as f:
         label_dict = json.load(f)
