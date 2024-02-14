@@ -1,0 +1,37 @@
+{
+    "ContentCreatorName": "freesurfer-linux-ubuntu22_x86_64-dev-20240112-88246c0",
+    "ClinicalTrialSeriesID": "Brain",
+    "ClinicalTrialTimePointID": "1",
+    "SeriesDescription": "Right-Cerebral-White-Matter",
+    "SeriesNumber": "1",
+    "InstanceNumber": "1",
+    "segmentAttributes": [
+        [
+            {
+                "labelID": 1,
+                "SegmentDescription": "Right-Cerebral-White-Matter",
+                "SegmentAlgorithmType": "AUTOMATIC",
+                "SegmentAlgorithmName": "WMH-SynthSeg",
+                "SegmentedPropertyCategoryCodeSequence": {
+                    "CodeValue": "n/a",
+                    "CodingSchemeDesignator": "n/a",
+                    "CodeMeaning": "Anatomical Structure"
+                },
+                "SegmentedPropertyTypeCodeSequence": {
+                    "CodeValue": "n/a",
+                    "CodingSchemeDesignator": "n/a",
+                    "CodeMeaning": "Right-Cerebral-White-Matter"
+                },
+                "recommendedDisplayRGBValue": [
+                    245,
+                    245,
+                    245
+                ]
+            }
+        ]
+    ],
+    "ContentLabel": "SEGMENTATION",
+    "ContentDescription": "Right-Cerebral-White-Matter",
+    "ClinicalTrialCoordinatingCenterName": "n/a",
+    "BodyPartExamined": "Brain"
+}
