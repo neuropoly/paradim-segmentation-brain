@@ -364,7 +364,7 @@ def get_dimension(im_file, verbose=1):
     for i in range(min(len(data_shape), 4)):
         ndims[i] = data_shape[i]
         pdims[i] = zooms[i]
-    return *ndims, *pdims
+    return tuple(ndims) , tuple(pdims)
 
 
 def change_orientation(im_src, orientation, im_dst=None, inverse=False):
