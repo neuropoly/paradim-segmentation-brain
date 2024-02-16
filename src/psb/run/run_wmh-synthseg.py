@@ -40,8 +40,8 @@ def run_wmh_synthseg():
     args = parser.parse_args()
 
     # Set logging level
-    logging.basicConfig(level=logging.INFO)
-    coloredlogs.install(fmt='%(message)s', level='INFO')
+    logging.basicConfig(level=logging.WARNING)
+    coloredlogs.install(fmt='%(message)s', level='WARNING')
 
     # Load wmh label dictionary
     label_wmh_path = 'src/psb/labels/WMH-SynthSeg/label-maps.json'
@@ -60,9 +60,9 @@ def run_wmh_synthseg():
     for last_subfolder in last_folders_in_branches:
         file_count = count_files_in_folder(last_subfolder)
         if min_dcm <= file_count :
-            logging.info('')
-            logging.info(f'================ The folder {last_subfolder} has: {file_count} .dcm files. ================')
-            logging.info('')
+            print('')
+            print(f'================ The folder {last_subfolder} has: {file_count} .dcm files. ================')
+            print('')
 
             # Init paths
             folder_basename = os.path.basename(dcm_in)
@@ -82,7 +82,7 @@ def run_wmh_synthseg():
             nifti_files_all = glob.glob(os.path.join(tmpdir, '*.nii.gz'))
 
             if len(nifti_files_all) > 1:
-                logging.info('Multiple images were detected')
+                logging.warning('Multiple images were detected')
             
             # For each generated files
             for nifti_anat_path in nifti_files_all:
@@ -91,9 +91,9 @@ def run_wmh_synthseg():
                 temp_dseg = os.path.join(tmpdir, 'dseg.nii.gz') 
                 temp_dseg_res = os.path.join(tmpdir, 'dseg_res.nii.gz') 
 
-                logging.info('')
-                logging.info(f'=========================== Starting inference with WMH-SynthSeg ==========================')
-                logging.info('')
+                print('')
+                print(f'=========================== Starting inference with WMH-SynthSeg ==========================')
+                print('')
 
                 # To test the script, you can try using bet2 to segment only the brain.
                 command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
@@ -127,17 +127,17 @@ def run_wmh_synthseg():
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
                             dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder, segmentation_data, template_path)
                             dcm_seg_file.save_as(output_file_path)
-                            logging.info('DICOM segmentation saved on : ',  output_file_path)
-                            logging.info('')
+                            print('DICOM segmentation saved on : ',  output_file_path)
+                            print('')
                         else:
-                            logging.info(f"Label - {intensity} - {label_name} Does Not Exist")
+                            print(f"Label - {intensity} - {label_name} Does Not Exist")
                         
                     # Delete the temporary folder
                     rmtree(tmpdir)
 
-                    logging.info('')
-                    logging.info(f" Temporary file {temp_folder_name} was deleted" )
-                    logging.info('')
+                    print('')
+                    print(f" Temporary file {temp_folder_name} was deleted" )
+                    print('')
 
                 else: 
                     logging.warning(f'Different number of slices with the original DICOM (possible GRE, DTI, fMRI).')
