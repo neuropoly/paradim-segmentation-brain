@@ -90,16 +90,9 @@ def run_wmh_synthseg():
                 # Run inference using a subprocess
                 subprocess.run(command_2, shell=True)
 
-                # Re-orient of nifti files 
-                # TODO: make this conversion more reliable:
-                # - extract the orientation from the original DICOM
-                # - use the class Image
+                # Load image
                 image_data_nii = nib.load(temp_dseg_res)
                 segmentation_data_array = np.array(image_data_nii.get_fdata())
-                segmentation_data_array = np.rot90(segmentation_data_array) 
-                segmentation_data_array = np.flipud(segmentation_data_array) 
-                segmentation_data_array = np.transpose(segmentation_data_array, (2, 0, 1))
-                segmentation_data_array = segmentation_data_array[::-1]
 
                 # Validation between the number of Dicom images and the anatomical slices.
                 num_dcm_files = count_files_in_folder(input_folder)
