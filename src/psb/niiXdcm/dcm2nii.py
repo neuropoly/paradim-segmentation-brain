@@ -9,7 +9,7 @@ from psb.utils.image import Image
 def convert_dicom_to_nifti(dicom_dir, output_folder, compression=True, reorient=False):
     dicom2nifti.convert_directory(dicom_dir, output_folder, compression=compression, reorient=reorient)
     dcm_ori_matrix = get_orientation_matrix_from_dicom(dicom_dir)
-    nifti_ori_matrix = get_nifti_orientation_matrix(dcm_ori_matrix)
+    nifti_ori_matrix = switch_convention_orientation_matrix(dcm_ori_matrix)
     orig_orientation = read_orientation(nifti_ori_matrix)
     nifti_files = glob.glob(os.path.join(output_folder, '*.nii.gz'))
     for file_path in nifti_files:
@@ -86,7 +86,7 @@ def get_orientation_matrix_from_dicom(dicom_dir):
     return dcm_ori_matrix
 
 
-def get_nifti_orientation_matrix(dcm_ori_matrix):
+def switch_convention_orientation_matrix(dcm_ori_matrix):
     """
     NIfTI coordinate system:
     X: L --> R
