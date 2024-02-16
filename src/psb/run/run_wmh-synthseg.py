@@ -7,12 +7,14 @@ import json
 import nibabel as nib
 import numpy as np
 import pydicom_seg
-from nibabel.nicom.dicomwrappers import wrapper_from_file
+import logging
+
 from psb.utils.utils import get_last_folders_in_branches, count_files_in_folder, create_directory, tmp_create, rmtree
 from psb.utils.image import Image
 from psb.niiXdcm.dcm2nii import convert_dicom_to_nifti
 from psb.niiXdcm.nii2dcm import convert_nifti_seg_to_dicom_seg
 
+logger = logging.getLogger(__name__)
 
 def get_parser():
     # parse command line arguments
@@ -44,9 +46,9 @@ def run_wmh_synthseg():
     for last_subfolder in last_folders_in_branches:
         file_count = count_files_in_folder(last_subfolder)
         if min_dcm <= file_count :
-            print('')
-            print(f'================ The folder {last_subfolder} has: {file_count} .dcm files. ================')
-            print('')
+            logger.info('')
+            logger.info(f'================ The folder {last_subfolder} has: {file_count} .dcm files. ================')
+            logger.info('')
 
             # Init paths
             folder_basename = os.path.basename(dcm_in)
@@ -67,7 +69,7 @@ def run_wmh_synthseg():
             nifti_files_all = glob.glob(os.path.join(tmpdir, '*.nii.gz'))
 
             if len(nifti_files_all) > 1:
-                print('Multiple images were detected')
+                logger.info('Multiple images were detected')
             
             # For each generated files
             for nifti_anat_path in nifti_files_all:
@@ -76,9 +78,9 @@ def run_wmh_synthseg():
                 temp_dseg = os.path.join(tmpdir, 'dseg.nii.gz') 
                 temp_dseg_res = os.path.join(tmpdir, 'dseg_res.nii.gz') 
 
-                print('')
-                print(f'=========================== Starting inference with WMH-SynthSeg ==========================')
-                print('')
+                logger.info('')
+                logger.info(f'=========================== Starting inference with WMH-SynthSeg ==========================')
+                logger.info('')
 
                 # To test the script, you can try using bet2 to segment only the brain.
                 command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
@@ -114,23 +116,23 @@ def run_wmh_synthseg():
                             dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder , segmentation_data, writer)
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
                             dcm_seg_file.save_as(output_file_path)
-                            print('DICOM segmentation saved on : ',  output_file_path)
-                            print('')
+                            logger.info('DICOM segmentation saved on : ',  output_file_path)
+                            logger.info('')
                         else:
-                            print(f"Label - {intensity} - {label_name} Does Not Exist")
+                            logger.info(f"Label - {intensity} - {label_name} Does Not Exist")
                         
                     # Delete the temporary folder
                     rmtree(tmpdir)
 
-                    print('')
-                    print(f" Temporary file {temp_folder_name} was deleted" )
-                    print('')
+                    logger.info('')
+                    logger.info(f" Temporary file {temp_folder_name} was deleted" )
+                    logger.info('')
 
                 else: 
-                    print(f'Different number of slices with the original DICOM (possible GRE, DTI, fMRI).')
+                    logger.warning(f'Different number of slices with the original DICOM (possible GRE, DTI, fMRI).')
         else:
             if min_dcm > file_count:
-                print(f"The dicom folder must contain at least {min_dcm} files: {file_count} files were detected. If you wish to run the script with fewer files, please enter the --min-dcm flag")
+                logger.warning(f"The dicom folder must contain at least {min_dcm} files: {file_count} files were detected. If you wish to run the script with fewer files, please use the flag --min-dcm")
 
 
 if __name__ == "__main__":
