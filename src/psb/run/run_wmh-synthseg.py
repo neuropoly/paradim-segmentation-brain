@@ -6,11 +6,9 @@ import glob
 import json
 import nibabel as nib
 import numpy as np
-import pydicom_seg
 import logging
 
 from psb.utils.utils import get_last_folders_in_branches, count_files_in_folder, create_directory, tmp_create, rmtree
-from psb.utils.image import Image
 from psb.niiXdcm.dcm2nii import convert_dicom_to_nifti
 from psb.niiXdcm.nii2dcm import convert_nifti_seg_to_dicom_seg
 
