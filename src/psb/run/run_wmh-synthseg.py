@@ -1,3 +1,15 @@
+# This script is used to perform the inference of the model WMH-SynthSeg (https://surfer.nmr.mgh.harvard.edu/fswiki/WMH-SynthSeg) from FreeSurfer on a given DICOM folder. 
+# This same script will return as an output the corresponding DICOM_SEGMENTATION in the output folder.
+#
+# For more help, please run:  python src/psb/run/run_wmh-synthseg.py -h
+#
+# Example:
+#       python src/psb/run/run_wmh-synthseg.py
+#               --dcm-in  ~/<your_dataset>/dicom_anat
+#               --dcm-out ~/<your_dataset>/dicom_seg
+#
+# Authors: Nilser Laines Medina, Nathan Molinier, Julien Cohen-Adad
+#
 import os
 import argparse
 import warnings
