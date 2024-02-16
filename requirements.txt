@@ -1,0 +1,7 @@
+pydicom
+SimpleITK
+dicom2nifti
+h5py
+torch
+nibabel
+pydicom_seg
