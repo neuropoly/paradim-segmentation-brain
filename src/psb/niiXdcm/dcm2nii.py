@@ -20,26 +20,47 @@ def convert_dicom_to_nifti(dicom_dir, output_folder, compression=True, reorient=
             img.save(file_path)
 
 
-def read_orientation(nifti_ori_matrix):
+def read_orientation(ori_matrix, convention='nifti'):
     """
-    Read orientation from a niftii orientation matrix
+    Read orientation from an orientation matrix
     """
     orientation = ''
-    for ax in np.hsplit(nifti_ori_matrix,3):
-        if ax[0] == 1:
-            orientation += 'L'
-        elif ax[0] == -1:
-            orientation += 'R'
-        elif ax[1] == 1:
-            orientation += 'P'
-        elif ax[1] == -1:
-            orientation += 'A'
-        elif ax[2] == 1:
-            orientation += 'I'
-        elif ax[2] == -1:
-            orientation += 'S'
-        else:
-            raise ValueError(f'Error with matrix: {nifti_ori_matrix}')
+    if convention == 'nifti':
+        for ax in np.hsplit(ori_matrix,3):
+            if ax[0] == 1:
+                orientation += 'L'
+            elif ax[0] == -1:
+                orientation += 'R'
+            elif ax[1] == 1:
+                orientation += 'P'
+            elif ax[1] == -1:
+                orientation += 'A'
+            elif ax[2] == 1:
+                orientation += 'I'
+            elif ax[2] == -1:
+                orientation += 'S'
+            else:
+                raise ValueError(f'Error with matrix: {ori_matrix}')
+    
+    elif convention == 'dicom':
+        for ax in np.hsplit(ori_matrix,3):
+            if ax[0] == 1:
+                orientation += 'R'
+            elif ax[0] == -1:
+                orientation += 'L'
+            elif ax[1] == 1:
+                orientation += 'A'
+            elif ax[1] == -1:
+                orientation += 'P'
+            elif ax[2] == 1:
+                orientation += 'I'
+            elif ax[2] == -1:
+                orientation += 'S'
+            else:
+                raise ValueError(f'Error with matrix: {ori_matrix}')
+            
+    else:
+        raise ValueError(f'Unknown convention: {convention}')
 
     return orientation
 
