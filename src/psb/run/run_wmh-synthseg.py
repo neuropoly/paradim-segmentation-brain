@@ -106,13 +106,11 @@ def run_wmh_synthseg():
                         all_intensities[intensity] = nib.Nifti1Image(segment.astype(np.uint8), image_data_nii.affine)
                         segmentation_data = np.array(all_intensities[intensity].get_fdata()) 
                         template_path = os.path.join(template_dir, f'{label_name}.json')
-                        template = pydicom_seg.template.from_dcmqi_metainfo(template_path)
-                        writer = pydicom_seg.MultiClassWriter( template = template, inplane_cropping=False,  skip_empty_slices=False,  skip_missing_segment=False, )
                     
                         # Save each class in different files
                         if np.max(segmentation_data) != 0:
-                            dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder , segmentation_data, writer)
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
+                            dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder, segmentation_data, template_path)
                             dcm_seg_file.save_as(output_file_path)
                             logger.info('DICOM segmentation saved on : ',  output_file_path)
                             logger.info('')
