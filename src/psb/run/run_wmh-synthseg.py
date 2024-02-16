@@ -19,6 +19,7 @@ import json
 import nibabel as nib
 import numpy as np
 import logging
+import coloredlogs
 
 from psb.utils.utils import get_last_folders_in_branches, count_files_in_folder, create_directory, tmp_create, rmtree
 from psb.niiXdcm.dcm2nii import convert_dicom_to_nifti
@@ -37,6 +38,10 @@ def get_parser():
 def run_wmh_synthseg():
     parser = get_parser()
     args = parser.parse_args()
+
+    # Set logging level
+    logging.basicConfig(level=logging.INFO)
+    coloredlogs.install(fmt='%(message)s', level='INFO')
 
     # Load wmh label dictionary
     label_wmh_path = 'src/psb/labels/WMH-SynthSeg/label-maps.json'
@@ -64,7 +69,6 @@ def run_wmh_synthseg():
             folder_structure = os.path.join(folder_basename,last_subfolder.split(f'/{folder_basename}/')[-1])
             input_folder = os.path.normpath(last_subfolder)
             output_folder = os.path.join(dcm_out, folder_structure)
-            script_directory = os.path.dirname(os.path.abspath(__file__))
 
             # Create output folder if does not exists
             create_directory(output_folder)
