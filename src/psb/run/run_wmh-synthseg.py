@@ -75,7 +75,7 @@ def run_wmh_synthseg():
             tmpdir = tmp_create(basename=temp_folder_name)
 
             # Convert DICOM to NIfTI
-            convert_dicom_to_nifti(input_folder, tmpdir)
+            convert_dicom_to_nifti(input_folder, tmpdir, reorient=False)
             nifti_files_all = glob.glob(os.path.join(tmpdir, '*.nii.gz'))
 
             if len(nifti_files_all) > 1:
