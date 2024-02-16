@@ -24,6 +24,7 @@ import coloredlogs
 from psb.utils.utils import get_last_folders_in_branches, count_files_in_folder, create_directory, tmp_create, rmtree
 from psb.niiXdcm.dcm2nii import convert_dicom_to_nifti
 from psb.niiXdcm.nii2dcm import convert_nifti_seg_to_dicom_seg
+from psb.utils.image import Image, zeros_like
 
 
 def get_parser():
@@ -106,26 +107,23 @@ def run_wmh_synthseg():
                 subprocess.run(command_2, shell=True)
 
                 # Load image
-                image_data_nii = nib.load(temp_dseg_res)
-                segmentation_data_array = np.array(image_data_nii.get_fdata())
+                image_out_nii = Image(temp_dseg_res)
 
                 # Validation between the number of Dicom images and the anatomical slices.
                 num_dcm_files = count_files_in_folder(input_folder)
-                if segmentation_data_array.shape[0] == num_dcm_files:
-                    all_intensities = {}
+                if image_out_nii.data.shape[0] == num_dcm_files:
                     # Split the multiple discrete segmentation (dseg)
                     for key, val in label_dict.items():
                         intensity = val
-                        label_name = key 
-                        segment = segmentation_data_array == intensity
-                        all_intensities[intensity] = nib.Nifti1Image(segment.astype(np.uint8), image_data_nii.affine)
-                        segmentation_data = np.array(all_intensities[intensity].get_fdata()) 
+                        label_name = key
+                        mask = zeros_like(image_out_nii)
+                        mask.data[np.where(image_out_nii.data != intensity)] = 0
                         template_path = os.path.join(template_dir, f'{label_name}.json')
                     
                         # Save each class in different files
-                        if np.max(segmentation_data) != 0:
+                        if np.max(mask.data) != 0:
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
-                            dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder, segmentation_data, template_path)
+                            dcm_seg_file = convert_nifti_seg_to_dicom_seg(input_folder, mask, template_path)
                             dcm_seg_file.save_as(output_file_path)
                             print('DICOM segmentation saved on : ',  output_file_path)
                             print('')
