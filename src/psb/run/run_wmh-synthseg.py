@@ -16,7 +16,6 @@ import warnings
 import subprocess
 import glob
 import json
-import nibabel as nib
 import numpy as np
 import logging
 import coloredlogs
@@ -73,7 +72,7 @@ def run_wmh_synthseg():
 
             # Create output folder if does not exists
             create_directory(output_folder)
-            
+            print('output_folder !:', output_folder)
             # Create a temporary folder
             temp_folder_name = os.path.basename(os.path.normpath(dcm_out) + "_temp")
             tmpdir = tmp_create(basename=temp_folder_name)
@@ -98,6 +97,7 @@ def run_wmh_synthseg():
 
                 # To test the script, you can try using bet2 to segment only the brain.
                 command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
+                
                 # Run inference using a subprocess
                 subprocess.run(command_1, shell=True)
 
@@ -111,15 +111,15 @@ def run_wmh_synthseg():
 
                 # Validation between the number of Dicom images and the anatomical slices.
                 num_dcm_files = count_files_in_folder(input_folder)
-                if image_out_nii.data.shape[0] == num_dcm_files:
+                if image_out_nii.data.shape[2] == num_dcm_files:
                     # Split the multiple discrete segmentation (dseg)
                     for key, val in label_dict.items():
                         intensity = val
                         label_name = key
                         mask = zeros_like(image_out_nii)
+                        mask.data = (image_out_nii.data).astype(np.uint8)   
                         mask.data[np.where(image_out_nii.data != intensity)] = 0
                         template_path = os.path.join(template_dir, f'{label_name}.json')
-                    
                         # Save each class in different files
                         if np.max(mask.data) != 0:
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
