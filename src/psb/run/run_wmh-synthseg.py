@@ -66,13 +66,21 @@ def run_wmh_synthseg():
 
             # Init paths
             folder_basename = os.path.basename(dcm_in)
-            folder_structure = os.path.join(folder_basename,last_subfolder.split(f'/{folder_basename}/')[-1])
             input_folder = os.path.normpath(last_subfolder)
+
+            # Fetch folder structure
+            if os.path.basename(input_folder) != folder_basename:
+                folder_structure = os.path.join(folder_basename, input_folder.split(f'/{folder_basename}/')[-1])
+            else:
+                folder_structure = folder_basename
+            
+            # Create output path
             output_folder = os.path.join(dcm_out, folder_structure)
 
             # Create output folder if does not exists
             create_directory(output_folder)
             print('output_folder !:', output_folder)
+
             # Create a temporary folder
             temp_folder_name = os.path.basename(os.path.normpath(dcm_out) + "_temp")
             tmpdir = tmp_create(basename=temp_folder_name)
