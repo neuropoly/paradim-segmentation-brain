@@ -105,7 +105,6 @@ def run_wmh_synthseg():
 
                 # To test the script, you can try using bet2 to segment only the brain.
                 command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
-                
                 # Run inference using a subprocess
                 subprocess.run(command_1, shell=True)
 
@@ -126,8 +125,11 @@ def run_wmh_synthseg():
                         label_name = key
                         mask = zeros_like(image_out_nii)
                         mask.data = (image_out_nii.data).astype(np.uint8)   
-                        mask.data[np.where(image_out_nii.data != intensity)] = 0
+                        mask.data[np.where(mask.data != intensity)] = 0
+                        mask.data = np.where(mask.data > 0, 1, 0).astype(np.uint8)   
+                       
                         template_path = os.path.join(template_dir, f'{label_name}.json')
+
                         # Save each class in different files
                         if np.max(mask.data) != 0:
                             output_file_path = os.path.join(output_folder, f"{str(intensity).zfill(2)}_{label_name}_WMH_SynthSeg.dcm")
