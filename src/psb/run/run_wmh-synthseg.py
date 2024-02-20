@@ -99,26 +99,29 @@ def run_wmh_synthseg():
                 temp_dseg = os.path.join(tmpdir, 'dseg.nii.gz') 
                 temp_dseg_res = os.path.join(tmpdir, 'dseg_res.nii.gz') 
 
-                print('')
-                print(f'=========================== Starting inference with WMH-SynthSeg ==========================')
-                print('')
-
-                # To test the script, you can try using bet2 to segment only the brain.
-                command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
-                # Run inference using a subprocess
-                subprocess.run(command_1, shell=True)
-
-                # Reslincing of the output (mask) to the anat image
-                command_2 = f"mri_vol2vol --mov {temp_dseg} --targ {nifti_anat_path} --o {temp_dseg_res} --regheader --nearest "
-                # Run inference using a subprocess
-                subprocess.run(command_2, shell=True)
-
-                # Load image
-                image_out_nii = Image(temp_dseg_res)
+                # Load image for shape
+                image_shape_nii = Image(nifti_anat_path)
 
                 # Validation between the number of Dicom images and the anatomical slices.
                 num_dcm_files = count_files_in_folder(input_folder)
-                if image_out_nii.data.shape[2] == num_dcm_files:
+                if image_shape_nii.data.shape[2] == num_dcm_files:
+                        
+                    print('')
+                    print(f'=========================== Starting inference with WMH-SynthSeg ==========================')
+                    print('')
+
+                    # To test the script, you can try using bet2 to segment only the brain.
+                    command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
+                    # Run inference using a subprocess
+                    subprocess.run(command_1, shell=True)
+
+                    # Reslincing of the output (mask) to the anat image
+                    command_2 = f"mri_vol2vol --mov {temp_dseg} --targ {nifti_anat_path} --o {temp_dseg_res} --regheader --nearest "
+                    # Run inference using a subprocess
+                    subprocess.run(command_2, shell=True)
+
+                    # Load image
+                    image_out_nii = Image(temp_dseg_res)
                     # Split the multiple discrete segmentation (dseg)
                     for key, val in label_dict.items():
                         intensity = val
