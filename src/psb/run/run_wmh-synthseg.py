@@ -111,7 +111,7 @@ def run_wmh_synthseg():
                     print('')
 
                     # To test the script, you can try using bet2 to segment only the brain.
-                    command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg}"
+                    command_1 = f"python3 /usr/local/WMHSynthSeg/inference.py --i {nifti_anat_path} --o {temp_dseg} --device cuda"
                     # Run inference using a subprocess
                     subprocess.run(command_1, shell=True)
 
